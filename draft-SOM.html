@@ -1,11 +1,998 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>School Of Medicine Assignment Groupings</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SOM Groupings — School of Medicine</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Sora:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap');
+
+:root{
+  --white:#ffffff;
+  --blue-deep:#12296b;
+  --blue:#2451c9;
+  --blue-soft:#e8eefc;
+  --yellow:#ffc93c;
+  --yellow-soft:#fff6df;
+  --ink:#12172b;
+  --ink-mute:#5b6280;
+  --line:#e6e8f0;
+  --red:#d64545;
+  --red-soft:#fdeaea;
+  --green:#1e9e6b;
+  --green-soft:#e7f7f0;
+  --radius:14px;
+  --shadow:0 4px 18px rgba(18,41,107,.07);
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--white);
+  color:var(--ink);
+  font-family:'Inter',sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3,.display{font-family:'Sora',sans-serif;}
+button{font-family:'Inter',sans-serif;cursor:pointer;}
+.mono{font-family:'JetBrains Mono',monospace;}
+
+/* ---------- Header / ECG motif ---------- */
+.topbar{
+  background:var(--blue-deep);
+  color:var(--white);
+  padding:18px 28px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  position:sticky; top:0; z-index:50;
+}
+.brand{display:flex; align-items:center; gap:14px;}
+.brand-mark{
+  width:42px;height:42px;border-radius:11px;
+  background:linear-gradient(135deg,var(--yellow),#ffdc7a);
+  display:flex;align-items:center;justify-content:center;
+  font-weight:800;color:var(--blue-deep);font-size:18px;font-family:'Sora',sans-serif;
+  flex-shrink:0;
+}
+.brand h1{font-size:18px;margin:0;font-weight:700;letter-spacing:.2px;}
+.brand p{margin:1px 0 0;font-size:12px;color:#b9c6f0;font-weight:500;}
+
+.role-zone{display:flex;align-items:center;gap:10px;}
+.role-select{
+  background:rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.18);
+  color:var(--white);
+  border-radius:9px;
+  padding:8px 12px;
+  font-size:13px;
+  font-weight:600;
+}
+.mode-pill{
+  padding:7px 13px;border-radius:999px;font-size:12px;font-weight:700;
+  display:flex;align-items:center;gap:6px;
+}
+.mode-pill.view{background:rgba(255,255,255,.1);color:#d7e0f7;}
+.mode-pill.edit{background:var(--yellow);color:var(--blue-deep);}
+.mode-pill .dot{width:7px;height:7px;border-radius:50%;background:currentColor;}
+
+.ecg{width:100%;height:20px;display:block;}
+.ecg path{fill:none;stroke:var(--yellow);stroke-width:2;stroke-linecap:round;stroke-linejoin:round;opacity:.85;}
+
+/* ---------- Nav ---------- */
+.nav{
+  display:flex;gap:6px;padding:14px 28px 0;
+  border-bottom:1px solid var(--line);
+  background:var(--white);
+  position:sticky; top:78px; z-index:40;
+}
+.nav button{
+  background:none;border:none;padding:12px 18px;font-size:14px;font-weight:600;
+  color:var(--ink-mute);border-bottom:3px solid transparent;margin-bottom:-1px;
+  transition:.15s;
+}
+.nav button:hover{color:var(--blue);}
+.nav button.active{color:var(--blue-deep);border-bottom-color:var(--yellow);}
+.nav .spacer{flex:1;}
+.nav .count-badge{
+  background:var(--blue-soft);color:var(--blue-deep);
+  border-radius:999px;padding:2px 8px;font-size:11px;font-weight:700;margin-left:6px;
+}
+
+/* ---------- Layout ---------- */
+.wrap{max-width:1280px;margin:0 auto;padding:26px 28px 80px;}
+.view{display:none;}
+.view.active{display:block;}
+
+.panel-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px;flex-wrap:wrap;}
+.panel-head h2{margin:0;font-size:21px;font-weight:700;color:var(--blue-deep);}
+.panel-head p{margin:4px 0 0;color:var(--ink-mute);font-size:13.5px;}
+
+.btn{
+  border:none;border-radius:10px;padding:10px 16px;font-size:13.5px;font-weight:700;
+  display:inline-flex;align-items:center;gap:7px;transition:.15s;
+}
+.btn-primary{background:var(--blue-deep);color:var(--white);}
+.btn-primary:hover{background:var(--blue);}
+.btn-yellow{background:var(--yellow);color:var(--blue-deep);}
+.btn-yellow:hover{background:#ffd75c;}
+.btn-ghost{background:var(--blue-soft);color:var(--blue-deep);}
+.btn-ghost:hover{background:#d9e4fb;}
+.btn-outline{background:var(--white);color:var(--ink-mute);border:1.5px solid var(--line);}
+.btn-outline:hover{border-color:var(--blue);color:var(--blue);}
+.btn-danger{background:var(--red-soft);color:var(--red);}
+.btn-danger:hover{background:#fbdada;}
+.btn:disabled{opacity:.4;cursor:not-allowed;}
+.btn-sm{padding:6px 11px;font-size:12px;}
+
+/* ---------- Stat strip ---------- */
+.stat-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:22px;}
+.stat-card{
+  background:var(--blue-soft);border-radius:12px;padding:14px 16px;
+}
+.stat-card .num{font-family:'Sora',sans-serif;font-size:23px;font-weight:800;color:var(--blue-deep);}
+.stat-card .lbl{font-size:11.5px;color:var(--ink-mute);font-weight:600;margin-top:2px;}
+.stat-card.yellow{background:var(--yellow-soft);}
+.stat-card.yellow .num{color:#93700a;}
+
+/* ---------- Students table ---------- */
+.table-card{
+  background:var(--white);border:1px solid var(--line);border-radius:var(--radius);
+  overflow:hidden;box-shadow:var(--shadow);
+}
+.table-toolbar{
+  display:flex;gap:10px;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap;
+}
+.search-box{
+  flex:1;min-width:180px;border:1.5px solid var(--line);border-radius:9px;padding:8px 12px;font-size:13px;
+}
+.search-box:focus{outline:none;border-color:var(--blue);}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+thead th{
+  text-align:left;padding:11px 14px;background:#f7f8fc;color:var(--ink-mute);
+  font-weight:700;font-size:11.5px;text-transform:uppercase;letter-spacing:.4px;
+  border-bottom:1px solid var(--line);
+}
+tbody td{padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:middle;}
+tbody tr:hover{background:#fbfbfe;}
+.chip{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:999px;font-size:11.5px;font-weight:700;}
+.chip.boy{background:var(--blue-soft);color:var(--blue-deep);}
+.chip.girl{background:#ffe3ef;color:#b3236a;}
+.chip.group{background:var(--yellow-soft);color:#93700a;}
+.name-cell{font-weight:600;}
+.mute{color:var(--ink-mute);}
+.row-actions{display:flex;gap:6px;}
+.icon-btn{
+  border:none;background:none;width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;color:var(--ink-mute);
+}
+.icon-btn:hover{background:var(--blue-soft);color:var(--blue);}
+.icon-btn.danger:hover{background:var(--red-soft);color:var(--red);}
+.empty-state{padding:60px 20px;text-align:center;color:var(--ink-mute);}
+.empty-state .big{font-size:38px;margin-bottom:10px;}
+
+/* ---------- Groups ---------- */
+.conflict-box{
+  border:1.5px dashed var(--red);background:var(--red-soft);border-radius:12px;
+  padding:14px 16px;margin-bottom:20px;
+}
+.conflict-box h4{margin:0 0 8px;color:var(--red);font-size:13.5px;display:flex;align-items:center;gap:7px;}
+.conflict-box ul{margin:0;padding-left:18px;font-size:12.5px;color:#8a2b2b;line-height:1.7;}
+.conflict-box.ok{border-color:var(--green);background:var(--green-soft);}
+.conflict-box.ok h4{color:var(--green);}
+
+.groups-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;}
+.group-card{
+  background:var(--white);border:1px solid var(--line);border-radius:var(--radius);
+  box-shadow:var(--shadow);overflow:hidden;display:flex;flex-direction:column;
+}
+.group-card.dragover{outline:2.5px dashed var(--blue);outline-offset:-4px;}
+.group-head{
+  background:var(--blue-deep);color:var(--white);padding:13px 15px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.group-head .gname{font-family:'Sora',sans-serif;font-weight:700;font-size:15px;}
+.group-head .gsize{font-size:11px;color:#b9c6f0;font-weight:600;}
+.balance-bar{display:flex;height:6px;}
+.balance-bar span{height:100%;}
+.balance-bar .boy{background:var(--blue);}
+.balance-bar .girl{background:#ec6fa3;}
+.group-body{padding:10px;flex:1;min-height:70px;}
+.student-chip{
+  display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:9px;
+  background:#fbfbfe;border:1px solid var(--line);margin-bottom:7px;
+  font-size:12.5px;cursor:grab;transition:.12s;
+}
+.student-chip:hover{border-color:var(--blue);}
+.student-chip.conflict{border-color:var(--red);background:var(--red-soft);}
+.student-chip .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+.student-chip .dot.boy{background:var(--blue);}
+.student-chip .dot.girl{background:#ec6fa3;}
+.student-chip .sc-name{font-weight:700;flex:1;}
+.student-chip .sc-meta{font-size:10.5px;color:var(--ink-mute);display:block;margin-top:1px;}
+.group-foot{padding:9px 14px;border-top:1px solid var(--line);font-size:11px;color:var(--ink-mute);}
+
+/* ---------- Modal ---------- */
+.overlay{
+  position:fixed;inset:0;background:rgba(18,23,43,.5);display:none;align-items:center;justify-content:center;z-index:100;padding:20px;
+}
+.overlay.active{display:flex;}
+.modal{
+  background:var(--white);border-radius:16px;max-width:560px;width:100%;
+  max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25);
+}
+.modal-head{
+  padding:20px 24px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;
+  position:sticky;top:0;background:var(--white);z-index:2;
+}
+.modal-head h3{margin:0;font-size:17px;color:var(--blue-deep);}
+.modal-body{padding:22px 24px;}
+.modal-foot{padding:16px 24px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px;}
+.close-x{border:none;background:var(--blue-soft);width:30px;height:30px;border-radius:8px;color:var(--blue-deep);font-size:15px;}
+
+.field{margin-bottom:16px;}
+.field label{display:block;font-size:12px;font-weight:700;color:var(--ink-mute);margin-bottom:6px;text-transform:uppercase;letter-spacing:.3px;}
+.field input[type=text],.field input[type=number],.field select{
+  width:100%;border:1.5px solid var(--line);border-radius:9px;padding:10px 12px;font-size:13.5px;font-family:'Inter',sans-serif;
+}
+.field input:focus,.field select:focus{outline:none;border-color:var(--blue);}
+.field .hint{font-size:11.5px;color:var(--ink-mute);margin-top:5px;}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+.pick-list{border:1.5px solid var(--line);border-radius:9px;max-height:150px;overflow-y:auto;padding:6px;}
+.pick-item{display:flex;align-items:center;gap:9px;padding:7px 8px;border-radius:7px;font-size:13px;}
+.pick-item:hover{background:var(--blue-soft);}
+.pick-item input{margin:0;}
+.add-inline{display:flex;gap:8px;margin-top:6px;}
+.add-inline input{flex:1;}
+
+/* ---------- Passcode ---------- */
+.pc-box{text-align:center;padding:6px 0 10px;}
+.pc-box input{
+  width:100%;text-align:center;letter-spacing:6px;font-size:18px;padding:12px;border-radius:9px;border:1.5px solid var(--line);font-family:'JetBrains Mono',monospace;
+}
+.pc-error{color:var(--red);font-size:12px;margin-top:8px;display:none;font-weight:600;}
+
+.toast{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  background:var(--blue-deep);color:var(--white);padding:12px 20px;border-radius:10px;font-size:13px;font-weight:600;
+  box-shadow:0 8px 24px rgba(0,0,0,.2);z-index:200;opacity:0;pointer-events:none;transition:.25s;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(-4px);}
+
+.locked-note{
+  display:flex;align-items:center;gap:8px;background:var(--yellow-soft);color:#93700a;
+  padding:10px 14px;border-radius:10px;font-size:12.5px;font-weight:600;margin-bottom:18px;
+}
+@media (max-width:720px){
+  .stat-strip{grid-template-columns:repeat(2,1fr);}
+  .row2,.row3{grid-template-columns:1fr;}
+  .topbar{padding:14px 16px;flex-wrap:wrap;}
+  .nav{padding:12px 16px 0;overflow-x:auto;top:96px;}
+  .wrap{padding:18px 16px 80px;}
+}
+</style>
 </head>
 <body>
-    <p>Welcome to the School of Medicine Assignment Groupings page. Here you will find information regarding the various groupings for assignments within the School of Medicine.</p>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-mark">SOM</div>
+    <div>
+      <h1>Group Assignment System</h1>
+      <p>School of Medicine · Cohort Groupings, Year 1–4</p>
+    </div>
+  </div>
+  <div class="role-zone">
+    <select class="role-select" id="viewerRole">
+      <option>Dr. LG</option>
+      <option>Facilitator</option>
+      <option>Staff</option>
+      <option value="coordinator">Level Coordinator</option>
+    </select>
+    <div class="mode-pill view" id="modePill"><span class="dot"></span> View only</div>
+  </div>
+</div>
+<svg class="ecg" viewBox="0 0 1200 20" preserveAspectRatio="none"><path d="M0,10 L260,10 L285,10 L300,2 L315,18 L330,10 L360,10 L1200,10"/></svg>
+
+<div class="nav">
+  <button class="active" data-tab="students">Students <span class="count-badge" id="navCountStudents">0</span></button>
+  <button data-tab="groups">Groups <span class="count-badge" id="navCountGroups">8</span></button>
+  <button data-tab="rules">Grouping Rules</button>
+  <div class="spacer"></div>
+</div>
+
+<div class="wrap">
+
+  <!-- STUDENTS VIEW -->
+  <div class="view active" id="view-students">
+    <div class="panel-head">
+      <div>
+        <h2>Student Roster</h2>
+        <p>Enter Test / IQ / Essay scores, income, home community, and any known relationships or family ties.</p>
+      </div>
+      <div style="display:flex;gap:10px;" id="studentActions">
+        <button class="btn btn-outline" id="btnExport">⭳ Export CSV</button>
+        <button class="btn btn-primary" id="btnAddStudent">+ Add Student</button>
+      </div>
+    </div>
+
+    <div class="stat-strip">
+      <div class="stat-card"><div class="num" id="statTotal">0</div><div class="lbl">Total Students</div></div>
+      <div class="stat-card"><div class="num" id="statBoys">0</div><div class="lbl">Boys</div></div>
+      <div class="stat-card"><div class="num" id="statGirls">0</div><div class="lbl">Girls</div></div>
+      <div class="stat-card yellow"><div class="num" id="statCommunities">0</div><div class="lbl">Communities on file</div></div>
+      <div class="stat-card yellow"><div class="num" id="statPairs">0</div><div class="lbl">Relationships / Family links</div></div>
+    </div>
+
+    <div class="table-card">
+      <div class="table-toolbar">
+        <input class="search-box" id="searchBox" placeholder="Search by name...">
+        <select class="search-box" style="flex:0 0 160px" id="filterGender">
+          <option value="">All genders</option>
+          <option value="M">Boys</option>
+          <option value="F">Girls</option>
+        </select>
+        <select class="search-box" style="flex:0 0 160px" id="filterGroup">
+          <option value="">All groups</option>
+        </select>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th><th>Gender</th><th>Composite Score</th><th>Income (₱)</th><th>Community</th><th>Links</th><th>Group</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="studentsBody"></tbody>
+      </table>
+      <div class="empty-state" id="studentsEmpty" style="display:none;">
+        <div class="big">🩺</div>
+        <div><strong>No students yet.</strong></div>
+        <div>Click "Add Student" to start building the roster.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- GROUPS VIEW -->
+  <div class="view" id="view-groups">
+    <div class="panel-head">
+      <div>
+        <h2>Group Assignments</h2>
+        <p>8 groups, generated to balance gender and rank while flagging relationship, family, community, and income conflicts.</p>
+      </div>
+      <div style="display:flex;gap:10px;" id="groupActions">
+        <button class="btn btn-ghost" id="btnRecheck">↻ Re-check conflicts</button>
+        <button class="btn btn-yellow" id="btnGenerate">⚙ Generate Groups</button>
+      </div>
+    </div>
+
+    <div id="conflictArea"></div>
+    <div class="groups-grid" id="groupsGrid"></div>
+  </div>
+
+  <!-- RULES VIEW -->
+  <div class="view" id="view-rules">
+    <div class="panel-head">
+      <div>
+        <h2>Grouping Rules</h2>
+        <p>These are the six criteria the auto-assignment engine applies, in priority order.</p>
+      </div>
+    </div>
+    <div class="table-card" style="padding:6px 0;">
+      <table>
+        <thead><tr><th style="width:40px">#</th><th>Rule</th><th>How it's enforced</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">1</td><td><strong>Ranking</strong> (Test, IQ, Essay)</td><td class="mute">Composite score is averaged, then top students are spread across all 8 groups using a snake draft — never clustered.</td></tr>
+          <tr><td class="mono">2</td><td><strong>Socio-economic status</strong></td><td class="mute">Students who report the exact same family income (e.g. two ₱100,000 entries) are automatically kept apart.</td></tr>
+          <tr><td class="mono">3</td><td><strong>Gender</strong></td><td class="mute">Boys and girls are each snake-drafted separately so every group gets a near-equal split.</td></tr>
+          <tr><td class="mono">4</td><td><strong>Community</strong></td><td class="mute">Students sharing the same home community are spread apart where possible; remaining overlaps are flagged with a note.</td></tr>
+          <tr><td class="mono">5</td><td><strong>Relationships</strong></td><td class="mute">Couples (if reported to coordinators) are always placed in different groups.</td></tr>
+          <tr><td class="mono">6</td><td><strong>Family members</strong></td><td class="mute">Linked family members are always placed in different groups.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="locked-note" style="margin-top:18px;">
+      ⓘ This tool runs entirely in your browser and stores data for everyone who opens this link. Edit access is a simple passcode gate for convenience, not secure login — for production use, pair it with real authentication.
+    </div>
+  </div>
+
+</div>
+
+<!-- Add/Edit Student Modal -->
+<div class="overlay" id="studentOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="studentModalTitle">Add Student</h3>
+      <button class="close-x" data-close="studentOverlay">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Full name</label>
+        <input type="text" id="f_name" placeholder="e.g. Maria Santos">
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Gender</label>
+          <select id="f_gender">
+            <option value="F">Girl</option>
+            <option value="M">Boy</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Family income (₱ / year)</label>
+          <input type="number" id="f_income" placeholder="e.g. 100000">
+        </div>
+      </div>
+      <div class="field">
+        <label>Ranking scores</label>
+        <div class="row3">
+          <input type="number" min="0" max="100" id="f_test" placeholder="Test">
+          <input type="number" min="0" max="100" id="f_iq" placeholder="IQ">
+          <input type="number" min="0" max="100" id="f_essay" placeholder="Essay">
+        </div>
+        <div class="hint">Enter 0–100 for each. Composite score is the average of the three.</div>
+      </div>
+      <div class="field">
+        <label>Home community</label>
+        <select id="f_community"></select>
+        <div class="add-inline">
+          <input type="text" id="f_newCommunity" placeholder="Add a new community, e.g. Community 9">
+          <button class="btn btn-ghost btn-sm" id="btnAddCommunity">Add</button>
+        </div>
+      </div>
+      <div class="field">
+        <label>In a relationship with (if known)</label>
+        <select id="f_partner"><option value="">— None reported —</option></select>
+      </div>
+      <div class="field">
+        <label>Family members also enrolled (if any)</label>
+        <div class="pick-list" id="f_familyList"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" data-close="studentOverlay">Cancel</button>
+      <button class="btn btn-primary" id="btnSaveStudent">Save Student</button>
+    </div>
+  </div>
+</div>
+
+<!-- Passcode Modal -->
+<div class="overlay" id="passOverlay">
+  <div class="modal" style="max-width:360px;">
+    <div class="modal-head">
+      <h3>Level Coordinator Access</h3>
+      <button class="close-x" data-close="passOverlay">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="pc-box">
+        <p style="color:var(--ink-mute);font-size:13px;margin-top:0;">Enter the coordinator passcode to unlock editing.</p>
+        <input type="password" id="passInput" maxlength="12" placeholder="••••••">
+        <div class="pc-error" id="passError">Incorrect passcode. Try again.</div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" data-close="passOverlay">Cancel</button>
+      <button class="btn btn-primary" id="btnUnlock">Unlock Editing</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   SOM GROUP ASSIGNMENT SYSTEM
+   Plain HTML/CSS/JS. Data is persisted via window.storage
+   (shared across everyone who opens this artifact link).
+   ========================================================= */
+
+const EDIT_PASSCODE = "coordinator2026"; // demo-level gate only, not real auth
+const NUM_GROUPS = 8;
+
+let state = {
+  students: [],      // {id,name,gender,test,iq,essay,income,community,partnerId,familyIds[],groupId}
+  communities: []
+};
+let editMode = false;
+let editingStudentId = null;
+
+/* ---------------- Storage ---------------- */
+async function loadState(){
+  try{
+    const s = await window.storage.get('smg-students', true);
+    state.students = s ? JSON.parse(s.value) : [];
+  }catch(e){ state.students = []; }
+  try{
+    const c = await window.storage.get('smg-communities', true);
+    state.communities = c ? JSON.parse(c.value) : ["Community 1","Community 2","Community 3","Community 4"];
+  }catch(e){ state.communities = ["Community 1","Community 2","Community 3","Community 4"]; }
+  renderAll();
+}
+async function saveStudents(){
+  try{ await window.storage.set('smg-students', JSON.stringify(state.students), true); }
+  catch(e){ showToast("Could not save — check your connection."); }
+}
+async function saveCommunities(){
+  try{ await window.storage.set('smg-communities', JSON.stringify(state.communities), true); }
+  catch(e){ showToast("Could not save communities."); }
+}
+
+/* ---------------- Helpers ---------------- */
+const $ = sel => document.querySelector(sel);
+const $$ = sel => Array.from(document.querySelectorAll(sel));
+function uid(){ return 's' + Math.random().toString(36).slice(2,9); }
+function composite(st){ return ((+st.test||0)+(+st.iq||0)+(+st.essay||0))/3; }
+function studentById(id){ return state.students.find(s=>s.id===id); }
+function showToast(msg){
+  const t=$('#toast'); t.textContent=msg; t.classList.add('show');
+  clearTimeout(showToast._t); showToast._t=setTimeout(()=>t.classList.remove('show'),2400);
+}
+
+/* ---------------- Role / Mode ---------------- */
+$('#viewerRole').addEventListener('change', e=>{
+  if(e.target.value === 'coordinator'){
+    if(!editMode) openPasscodeModal();
+  } else {
+    editMode = false;
+    updateModePill();
+  }
+});
+function openPasscodeModal(){
+  $('#passError').style.display='none';
+  $('#passInput').value='';
+  $('#passOverlay').classList.add('active');
+  setTimeout(()=>$('#passInput').focus(),80);
+}
+$('#btnUnlock').addEventListener('click', tryUnlock);
+$('#passInput').addEventListener('keydown', e=>{ if(e.key==='Enter') tryUnlock(); });
+function tryUnlock(){
+  if($('#passInput').value === EDIT_PASSCODE){
+    editMode = true;
+    updateModePill();
+    closeOverlay('passOverlay');
+    showToast("Editing unlocked.");
+  } else {
+    $('#passError').style.display='block';
+  }
+}
+function updateModePill(){
+  const pill = $('#modePill');
+  if(editMode){
+    pill.className='mode-pill edit';
+    pill.innerHTML='<span class="dot"></span> Editing enabled';
+  } else {
+    pill.className='mode-pill view';
+    pill.innerHTML='<span class="dot"></span> View only';
+    if($('#viewerRole').value==='coordinator') $('#viewerRole').selectedIndex=0;
+  }
+  renderAll();
+}
+
+/* ---------------- Overlays ---------------- */
+$$('[data-close]').forEach(b=>b.addEventListener('click', ()=>closeOverlay(b.dataset.close)));
+function closeOverlay(id){ $('#'+id).classList.remove('active'); }
+
+/* ---------------- Nav ---------------- */
+$$('.nav button[data-tab]').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    $$('.nav button[data-tab]').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    $$('.view').forEach(v=>v.classList.remove('active'));
+    $('#view-'+btn.dataset.tab).classList.add('active');
+  });
+});
+
+/* ---------------- Student Modal ---------------- */
+$('#btnAddStudent').addEventListener('click', ()=>{
+  if(!requireEdit()) return;
+  editingStudentId = null;
+  $('#studentModalTitle').textContent = 'Add Student';
+  ['f_name','f_income','f_test','f_iq','f_essay','f_newCommunity'].forEach(id=>$('#'+id).value='');
+  $('#f_gender').value='F';
+  populateCommunitySelect();
+  populatePartnerSelect(null);
+  populateFamilyList(null);
+  $('#studentOverlay').classList.add('active');
+});
+function requireEdit(){
+  if(!editMode){ showToast("Switch to Level Coordinator to edit."); return false; }
+  return true;
+}
+function populateCommunitySelect(){
+  const sel = $('#f_community'); sel.innerHTML='';
+  state.communities.forEach(c=>{
+    const o=document.createElement('option'); o.value=c; o.textContent=c; sel.appendChild(o);
+  });
+}
+function populatePartnerSelect(excludeId){
+  const sel = $('#f_partner'); sel.innerHTML='<option value="">— None reported —</option>';
+  state.students.filter(s=>s.id!==excludeId).forEach(s=>{
+    const o=document.createElement('option'); o.value=s.id; o.textContent=s.name; sel.appendChild(o);
+  });
+}
+function populateFamilyList(excludeId){
+  const wrap = $('#f_familyList'); wrap.innerHTML='';
+  const others = state.students.filter(s=>s.id!==excludeId);
+  if(others.length===0){ wrap.innerHTML='<div class="mute" style="padding:8px;font-size:12.5px;">Add more students to link family members.</div>'; return; }
+  others.forEach(s=>{
+    const row=document.createElement('label'); row.className='pick-item';
+    row.innerHTML = `<input type="checkbox" value="${s.id}"> ${s.name}`;
+    wrap.appendChild(row);
+  });
+}
+$('#btnAddCommunity').addEventListener('click', ()=>{
+  const v = $('#f_newCommunity').value.trim();
+  if(!v) return;
+  if(!state.communities.includes(v)) state.communities.push(v);
+  saveCommunities();
+  populateCommunitySelect();
+  $('#f_community').value = v;
+  $('#f_newCommunity').value='';
+});
+
+function openEditStudent(id){
+  if(!requireEdit()) return;
+  const s = studentById(id);
+  editingStudentId = id;
+  $('#studentModalTitle').textContent = 'Edit Student';
+  $('#f_name').value = s.name;
+  $('#f_gender').value = s.gender;
+  $('#f_income').value = s.income;
+  $('#f_test').value = s.test;
+  $('#f_iq').value = s.iq;
+  $('#f_essay').value = s.essay;
+  populateCommunitySelect();
+  $('#f_community').value = s.community;
+  populatePartnerSelect(id);
+  $('#f_partner').value = s.partnerId || '';
+  populateFamilyList(id);
+  (s.familyIds||[]).forEach(fid=>{
+    const cb = $(`#f_familyList input[value="${fid}"]`);
+    if(cb) cb.checked = true;
+  });
+  $('#studentOverlay').classList.add('active');
+}
+
+$('#btnSaveStudent').addEventListener('click', ()=>{
+  const name = $('#f_name').value.trim();
+  if(!name){ showToast("Please enter a name."); return; }
+  const familyIds = $$('#f_familyList input:checked').map(i=>i.value);
+  const partnerId = $('#f_partner').value || null;
+
+  const data = {
+    name,
+    gender: $('#f_gender').value,
+    income: +$('#f_income').value || 0,
+    test: +$('#f_test').value || 0,
+    iq: +$('#f_iq').value || 0,
+    essay: +$('#f_essay').value || 0,
+    community: $('#f_community').value || state.communities[0] || 'Community 1',
+    partnerId,
+    familyIds
+  };
+
+  if(editingStudentId){
+    const s = studentById(editingStudentId);
+    // clean old reciprocal links before applying new ones
+    unlinkPartner(s.id); unlinkFamily(s.id);
+    Object.assign(s, data);
+    if(partnerId) linkPartner(s.id, partnerId);
+    familyIds.forEach(fid=>linkFamily(s.id, fid));
+  } else {
+    const s = { id: uid(), groupId: null, ...data };
+    state.students.push(s);
+    if(partnerId) linkPartner(s.id, partnerId);
+    familyIds.forEach(fid=>linkFamily(s.id, fid));
+  }
+  saveStudents();
+  closeOverlay('studentOverlay');
+  renderAll();
+  showToast("Student saved.");
+});
+
+function linkPartner(a,b){
+  const A=studentById(a), B=studentById(b);
+  if(A) A.partnerId=b;
+  if(B) B.partnerId=a;
+}
+function unlinkPartner(id){
+  const s=studentById(id);
+  if(s && s.partnerId){
+    const p=studentById(s.partnerId);
+    if(p && p.partnerId===id) p.partnerId=null;
+  }
+  if(s) s.partnerId=null;
+}
+function linkFamily(a,b){
+  const A=studentById(a), B=studentById(b);
+  if(A && !A.familyIds.includes(b)) A.familyIds.push(b);
+  if(B && !B.familyIds.includes(a)) B.familyIds.push(a);
+}
+function unlinkFamily(id){
+  state.students.forEach(s=>{ s.familyIds = (s.familyIds||[]).filter(f=>f!==id); });
+  const s=studentById(id); if(s) s.familyIds=[];
+}
+
+function deleteStudent(id){
+  if(!requireEdit()) return;
+  if(!confirm("Remove this student from the roster? This cannot be undone.")) return;
+  unlinkPartner(id); unlinkFamily(id);
+  state.students = state.students.filter(s=>s.id!==id);
+  saveStudents();
+  renderAll();
+  showToast("Student removed.");
+}
+
+/* ---------------- Render: Students table ---------------- */
+function renderStudentsTable(){
+  const body = $('#studentsBody');
+  const q = $('#searchBox').value.trim().toLowerCase();
+  const fg = $('#filterGender').value;
+  const fgroup = $('#filterGroup').value;
+
+  const list = state.students.filter(s=>{
+    if(q && !s.name.toLowerCase().includes(q)) return false;
+    if(fg && s.gender!==fg) return false;
+    if(fgroup && String(s.groupId)!==fgroup) return false;
+    return true;
+  }).sort((a,b)=>composite(b)-composite(a));
+
+  body.innerHTML='';
+  $('#studentsEmpty').style.display = state.students.length ? 'none':'block';
+
+  list.forEach(s=>{
+    const links=[];
+    if(s.partnerId && studentById(s.partnerId)) links.push('💞 '+studentById(s.partnerId).name);
+    (s.familyIds||[]).forEach(fid=>{ const f=studentById(fid); if(f) links.push('👪 '+f.name); });
+
+    const tr=document.createElement('tr');
+    tr.innerHTML = `
+      <td class="name-cell">${s.name}</td>
+      <td><span class="chip ${s.gender==='M'?'boy':'girl'}">${s.gender==='M'?'Boy':'Girl'}</span></td>
+      <td class="mono">${composite(s).toFixed(1)}</td>
+      <td>₱${(s.income||0).toLocaleString()}</td>
+      <td>${s.community}</td>
+      <td class="mute" style="font-size:11.5px;">${links.length?links.join('<br>'):'—'}</td>
+      <td>${s.groupId ? `<span class="chip group">Group ${s.groupId}</span>` : '<span class="mute">Ungrouped</span>'}</td>
+      <td>
+        <div class="row-actions">
+          <button class="icon-btn" title="Edit" data-edit="${s.id}">✎</button>
+          <button class="icon-btn danger" title="Remove" data-del="${s.id}">🗑</button>
+        </div>
+      </td>`;
+    body.appendChild(tr);
+  });
+
+  $$('[data-edit]').forEach(b=>b.addEventListener('click',()=>openEditStudent(b.dataset.edit)));
+  $$('[data-del]').forEach(b=>b.addEventListener('click',()=>deleteStudent(b.dataset.del)));
+
+  // filter group select
+  const fgSel = $('#filterGroup');
+  const cur = fgSel.value;
+  fgSel.innerHTML = '<option value="">All groups</option>' + Array.from({length:NUM_GROUPS},(_,i)=>i+1).map(g=>`<option value="${g}">Group ${g}</option>`).join('');
+  fgSel.value = cur;
+
+  // stats
+  $('#statTotal').textContent = state.students.length;
+  $('#statBoys').textContent = state.students.filter(s=>s.gender==='M').length;
+  $('#statGirls').textContent = state.students.filter(s=>s.gender==='F').length;
+  $('#statCommunities').textContent = state.communities.length;
+  $('#statPairs').textContent = state.students.filter(s=>s.partnerId).length/2 + state.students.reduce((n,s)=>n+(s.familyIds||[]).length,0)/2;
+  $('#navCountStudents').textContent = state.students.length;
+
+  $('#studentActions').style.display = editMode ? 'flex':'none';
+}
+$('#searchBox').addEventListener('input', renderStudentsTable);
+$('#filterGender').addEventListener('change', renderStudentsTable);
+$('#filterGroup').addEventListener('change', renderStudentsTable);
+
+/* ---------------- Export ---------------- */
+$('#btnExport').addEventListener('click', ()=>{
+  const rows = [["Name","Gender","Composite Score","Income","Community","Group"]];
+  state.students.forEach(s=>rows.push([s.name,s.gender,composite(s).toFixed(1),s.income,s.community,s.groupId||'']));
+  const csv = rows.map(r=>r.map(v=>`"${String(v).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob = new Blob([csv],{type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'som-groupings.csv';
+  a.click();
+});
+
+/* ---------------- Auto-generate groups ---------------- */
+function snakeAssign(sortedIds, groupsArr){
+  sortedIds.forEach((id,i)=>{
+    const round = Math.floor(i / NUM_GROUPS);
+    const pos = i % NUM_GROUPS;
+    const g = (round % 2 === 0) ? pos : (NUM_GROUPS-1-pos);
+    groupsArr[g].push(id);
+  });
+}
+
+function generateGroups(){
+  if(!requireEdit()) return;
+  if(state.students.length < NUM_GROUPS){ showToast("Add more students before generating groups."); return; }
+  if(!confirm("This will re-assign every student into 8 groups and discard any manual drag-and-drop changes. Continue?")) return;
+
+  const groupsArr = Array.from({length:NUM_GROUPS},()=>[]);
+  const boys = state.students.filter(s=>s.gender==='M').sort((a,b)=>composite(b)-composite(a)).map(s=>s.id);
+  const girls = state.students.filter(s=>s.gender==='F').sort((a,b)=>composite(b)-composite(a)).map(s=>s.id);
+  snakeAssign(boys, groupsArr);
+  snakeAssign(girls, groupsArr);
+
+  groupsArr.forEach((ids,gi)=>{ ids.forEach(id=>{ studentById(id).groupId = gi+1; }); });
+
+  resolveConflicts();
+  saveStudents();
+  renderAll();
+  showToast("Groups generated.");
+}
+$('#btnGenerate').addEventListener('click', generateGroups);
+$('#btnRecheck').addEventListener('click', ()=>{ renderGroups(); showToast("Conflicts re-checked."); });
+
+/* -- conflict detection -- */
+function detectConflicts(){
+  const byGroup = {};
+  for(let g=1; g<=NUM_GROUPS; g++) byGroup[g] = state.students.filter(s=>s.groupId===g);
+  const conflicts = { family:[], relationship:[], community:[], income:[] };
+
+  Object.entries(byGroup).forEach(([g, members])=>{
+    // family
+    members.forEach(s=>{
+      (s.familyIds||[]).forEach(fid=>{
+        const f = members.find(m=>m.id===fid);
+        if(f && s.id < f.id) conflicts.family.push({group:+g, a:s.id, b:f.id});
+      });
+    });
+    // relationship
+    members.forEach(s=>{
+      if(s.partnerId){
+        const p = members.find(m=>m.id===s.partnerId);
+        if(p && s.id < p.id) conflicts.relationship.push({group:+g, a:s.id, b:p.id});
+      }
+    });
+    // community duplicates
+    const byCom = {};
+    members.forEach(s=>{ (byCom[s.community]=byCom[s.community]||[]).push(s.id); });
+    Object.entries(byCom).forEach(([com,ids])=>{ if(ids.length>1) conflicts.community.push({group:+g, community:com, ids}); });
+    // income duplicates
+    const byInc = {};
+    members.forEach(s=>{ if(s.income>0){ (byInc[s.income]=byInc[s.income]||[]).push(s.id); } });
+    Object.entries(byInc).forEach(([inc,ids])=>{ if(ids.length>1) conflicts.income.push({group:+g, income:inc, ids}); });
+  });
+  return conflicts;
+}
+
+/* -- swap-based resolver: family & relationship are hard, community/income soft -- */
+function resolveConflicts(){
+  let attempts = 0;
+  const maxAttempts = 600;
+
+  function totalHard(){
+    const c = detectConflicts();
+    return c.family.length + c.relationship.length;
+  }
+  function totalAll(){
+    const c = detectConflicts();
+    return c.family.length*100 + c.relationship.length*100 + c.community.length + c.income.length;
+  }
+
+  while(attempts < maxAttempts && totalAll() > 0){
+    attempts++;
+    const c = detectConflicts();
+    const target = c.family[0] || c.relationship[0] || c.community[0] || c.income[0];
+    if(!target) break;
+
+    const groupA = target.group;
+    const studentAId = target.a || target.ids[0];
+    const A = studentById(studentAId);
+    let bestSwap = null, bestScore = totalAll();
+
+    const candidates = state.students.filter(s=>s.gender===A.gender && s.groupId && s.groupId!==groupA);
+    for(const C of candidates){
+      const origAGroup = A.groupId, origCGroup = C.groupId;
+      A.groupId = origCGroup; C.groupId = origAGroup;
+      const score = totalAll();
+      if(score < bestScore){ bestScore = score; bestSwap = {aId:A.id, cId:C.id, aGroup:origCGroup, cGroup:origAGroup}; }
+      A.groupId = origAGroup; C.groupId = origCGroup;
+      if(bestScore === 0) break;
+    }
+    if(bestSwap){
+      studentById(bestSwap.aId).groupId = bestSwap.aGroup;
+      studentById(bestSwap.cId).groupId = bestSwap.cGroup;
+    } else {
+      break; // no improving swap found for this conflict, stop looping on it
+    }
+  }
+}
+
+/* ---------------- Render: Groups ---------------- */
+function renderGroups(){
+  const grid = $('#groupsGrid');
+  grid.innerHTML='';
+  const conflicts = detectConflicts();
+  const conflictedIds = new Set();
+  [...conflicts.family, ...conflicts.relationship].forEach(c=>{ conflictedIds.add(c.a); conflictedIds.add(c.b); });
+  conflicts.community.forEach(c=>c.ids.forEach(id=>conflictedIds.add(id)));
+  conflicts.income.forEach(c=>c.ids.forEach(id=>conflictedIds.add(id)));
+
+  for(let g=1; g<=NUM_GROUPS; g++){
+    const members = state.students.filter(s=>s.groupId===g).sort((a,b)=>composite(b)-composite(a));
+    const boys = members.filter(s=>s.gender==='M').length;
+    const girls = members.filter(s=>s.gender==='F').length;
+    const boyPct = members.length ? (boys/members.length*100) : 0;
+
+    const card = document.createElement('div');
+    card.className='group-card';
+    card.dataset.group = g;
+    card.innerHTML = `
+      <div class="group-head">
+        <span class="gname">Group ${g}</span>
+        <span class="gsize">${members.length} students</span>
+      </div>
+      <div class="balance-bar"><span class="boy" style="width:${boyPct}%"></span><span class="girl" style="width:${100-boyPct}%"></span></div>
+      <div class="group-body" data-drop="${g}"></div>
+      <div class="group-foot">♂ ${boys} boys · ♀ ${girls} girls</div>
+    `;
+    const body = card.querySelector('.group-body');
+    if(members.length===0){
+      body.innerHTML = '<div class="mute" style="font-size:12px;padding:10px;">No students assigned yet.</div>';
+    }
+    members.forEach(s=>{
+      const chip=document.createElement('div');
+      chip.className='student-chip' + (conflictedIds.has(s.id)?' conflict':'');
+      chip.draggable = editMode;
+      chip.dataset.id = s.id;
+      let meta = s.community;
+      if(s.partnerId) meta += ' · 💞 partner in group';
+      if((s.familyIds||[]).some(fid=>members.some(m=>m.id===fid))) meta += ' · 👪 family in group';
+      chip.innerHTML = `<span class="dot ${s.gender==='M'?'boy':'girl'}"></span><div><span class="sc-name">${s.name}</span><span class="sc-meta">${meta} · score ${composite(s).toFixed(1)}</span></div>`;
+      body.appendChild(chip);
+    });
+    grid.appendChild(card);
+  }
+
+  // drag & drop
+  if(editMode){
+    $$('.student-chip').forEach(chip=>{
+      chip.addEventListener('dragstart', e=>{ e.dataTransfer.setData('text/plain', chip.dataset.id); });
+    });
+    $$('.group-card').forEach(card=>{
+      card.addEventListener('dragover', e=>{ e.preventDefault(); card.classList.add('dragover'); });
+      card.addEventListener('dragleave', ()=>card.classList.remove('dragover'));
+      card.addEventListener('drop', e=>{
+        e.preventDefault(); card.classList.remove('dragover');
+        const id = e.dataTransfer.getData('text/plain');
+        const s = studentById(id);
+        if(s){ s.groupId = +card.dataset.group; saveStudents(); renderAll(); showToast(`Moved ${s.name} to Group ${card.dataset.group}.`); }
+      });
+    });
+  }
+
+  renderConflictBox(conflicts);
+  $('#groupActions').style.display = editMode ? 'flex':'none';
+}
+
+function renderConflictBox(conflicts){
+  const area = $('#conflictArea');
+  const total = conflicts.family.length + conflicts.relationship.length + conflicts.community.length + conflicts.income.length;
+  if(total===0){
+    area.innerHTML = `<div class="conflict-box ok"><h4>✓ No conflicts detected</h4><ul><li>All relationship, family, community, and income-duplicate rules are currently satisfied.</li></ul></div>`;
+    return;
+  }
+  const lines=[];
+  conflicts.relationship.forEach(c=>lines.push(`Group ${c.group}: <strong>${studentById(c.a)?.name}</strong> and <strong>${studentById(c.b)?.name}</strong> are in a relationship.`));
+  conflicts.family.forEach(c=>lines.push(`Group ${c.group}: <strong>${studentById(c.a)?.name}</strong> and <strong>${studentById(c.b)?.name}</strong> are family members.`));
+  conflicts.community.forEach(c=>lines.push(`Group ${c.group}: ${c.ids.map(id=>studentById(id)?.name).join(', ')} are all from <strong>${c.community}</strong>.`));
+  conflicts.income.forEach(c=>lines.push(`Group ${c.group}: ${c.ids.map(id=>studentById(id)?.name).join(', ')} report the same income (₱${(+c.income).toLocaleString()}).`));
+  area.innerHTML = `<div class="conflict-box"><h4>⚠ ${total} conflict${total>1?'s':''} need coordinator attention</h4><ul>${lines.map(l=>`<li>${l}</li>`).join('')}</ul></div>`;
+}
+
+/* ---------------- Render all ---------------- */
+function renderAll(){
+  renderStudentsTable();
+  renderGroups();
+}
+
+loadState();
+</script>
 </body>
 </html>
