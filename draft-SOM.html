@@ -180,13 +180,11 @@
       <div class="brand-badge">SM</div>
       <div class="brand-text">Cohort Groups<span>School of Medicine</span></div>
     </div>
-    <button class="nav-btn active" data-view="dashboard"><span class="nav-icon">▤</span><span class="nav-label">Dashboard</span></button>
+    <button class="nav-btn" data-view="groups"><span class="nav-icon">◫</span><span class="nav-label">Community Groups</span></button>
     <button class="nav-btn" data-view="add"><span class="nav-icon">✎</span><span class="nav-label">Add Student</span></button>
     <button class="nav-btn" data-view="roster"><span class="nav-icon">☰</span><span class="nav-label">Student Roster</span></button>
     <button class="nav-btn" data-view="generate"><span class="nav-icon">⚙</span><span class="nav-label">Generate Groups</span></button>
-    <button class="nav-btn" data-view="groups"><span class="nav-icon">◫</span><span class="nav-label">View Groups</span></button>
     <button class="nav-btn" data-view="communities"><span class="nav-icon">◍</span><span class="nav-label">Community Duty</span></button>
-    <div class="sidebar-foot">4-year cohort groups<br>persist for the batch.</div>
   </div>
 
   <!-- MAIN -->
@@ -201,31 +199,19 @@
 
     <div class="content">
 
-      <!-- DASHBOARD -->
-      <div class="view active" id="view-dashboard">
-        <div class="stat-row">
-          <div class="stat"><div class="num" id="statTotal">0</div><div class="lab">Students added</div></div>
-          <div class="stat"><div class="num" id="statBoys">0</div><div class="lab">Boys</div></div>
-          <div class="stat yellow"><div class="num" id="statGirls">0</div><div class="lab">Girls</div></div>
-          <div class="stat"><div class="num" id="statGroups">0</div><div class="lab">Groups generated</div></div>
+    <!-- GROUPS -->
+      <div class="view" id="view-groups">
+        <div id="groupsEmpty" class="empty">
+          <div class="big">◫</div>
+          <p>No groups generated yet. Go to <b>Generate Groups</b> once the roster is ready.</p>
         </div>
-        <div class="card">
-          <h3>How this works</h3>
-          <p>1. A Level Coordinator adds each student along with their ranking, family income, home community, and any known relationship or family links.</p>
-          <p>2. Once the roster is ready, click <b>Generate Groups</b> — the system builds 8 balanced groups automatically, following the school's grouping criteria.</p>
-          <p>3. Everyone (Dr. LG, Facilitators, Staff) can view the final groups. Level Coordinators can fine-tune by moving individual students between groups if needed.</p>
-          <p>4. These groups are meant to stay fixed for all 4 years, so review the results carefully before treating them as final.</p>
-        </div>
-        <div class="card">
-          <h3>Grouping criteria applied</h3>
-          <table>
-            <tr><td style="width:26px">🏅</td><td><b>Ranking</b> — top-ranked students (test, IQ, essay) are spread across groups, not clustered.</td></tr>
-            <tr><td>💰</td><td><b>Socio-economic status</b> — students with matching family income figures are kept apart.</td></tr>
-            <tr><td>⚧</td><td><b>Gender</b> — boys are spread as evenly as possible across all 8 groups.</td></tr>
-            <tr><td>🏘️</td><td><b>Community</b> — a group is never assigned duty in the home community of one of its own members.</td></tr>
-            <tr><td>💞</td><td><b>Relationships</b> — known couples are always placed in different groups.</td></tr>
-            <tr><td>👪</td><td><b>Family</b> — siblings / relatives are always placed in different groups.</td></tr>
-          </table>
+        <div id="groupsWrap" style="display:none;">
+          <div class="card">
+            <h3>Group health check</h3>
+            <p class="small-muted">Any remaining conflicts after auto-balancing are listed here so a coordinator can resolve them manually below.</p>
+            <div id="conflictList"></div>
+          </div>
+          <div class="group-grid" id="groupGrid"></div>
         </div>
       </div>
 
@@ -255,17 +241,8 @@
               <div class="hint">Students who report the exact same figure won't be placed together.</div>
             </div>
             <div>
-              <label>Home community *</label>
-              <input type="text" id="f_community" placeholder="e.g. Community 3 or Barangay name">
-              <div class="hint">Use a consistent label — e.g. "Community 1", "Community 2" — so duty assignments can be checked automatically.</div>
-
-              <label>In a known relationship with</label>
-              <select id="f_partner"><option value="">— none / not known —</option></select>
-              <div class="hint">Only set this if a coordinator is aware of the relationship.</div>
-
-              <label>Family members already in the roster</label>
-              <div class="chip-list" id="f_family"></div>
-
+              <label>Address *</label>
+              <input type="text" id="f_community" placeholder="Barangay name">
               <label>Notes</label>
               <textarea id="f_notes" rows="2" placeholder="Optional — anything else the coordinators should know"></textarea>
             </div>
@@ -311,22 +288,6 @@
         <div class="card" id="genResultCard" style="display:none;">
           <h3>Generation summary</h3>
           <div id="genSummary"></div>
-        </div>
-      </div>
-
-      <!-- GROUPS -->
-      <div class="view" id="view-groups">
-        <div id="groupsEmpty" class="empty">
-          <div class="big">◫</div>
-          <p>No groups generated yet. Go to <b>Generate Groups</b> once the roster is ready.</p>
-        </div>
-        <div id="groupsWrap" style="display:none;">
-          <div class="card">
-            <h3>Group health check</h3>
-            <p class="small-muted">Any remaining conflicts after auto-balancing are listed here so a coordinator can resolve them manually below.</p>
-            <div id="conflictList"></div>
-          </div>
-          <div class="group-grid" id="groupGrid"></div>
         </div>
       </div>
 
