@@ -178,9 +178,9 @@
   <div class="sidebar">
     <div class="brand">
       <div class="brand-badge">SM</div>
-      <div class="brand-text">Cohort Groups<span>School of Medicine</span></div>
+      <div class="brand-text">Assignment Group<span>School of Medicine</span></div>
     </div>
-    <button class="nav-btn" data-view="groups"><span class="nav-icon">◫</span><span class="nav-label">Community Groups</span></button>
+    <button class="nav-btn active" data-view="groups"><span class="nav-icon">◫</span><span class="nav-label">Community Groups</span></button>
     <button class="nav-btn" data-view="add"><span class="nav-icon">✎</span><span class="nav-label">Add Student</span></button>
     <button class="nav-btn" data-view="roster"><span class="nav-icon">☰</span><span class="nav-label">Student Roster</span></button>
     <button class="nav-btn" data-view="generate"><span class="nav-icon">⚙</span><span class="nav-label">Generate Groups</span></button>
@@ -190,9 +190,9 @@
   <!-- MAIN -->
   <div class="main">
     <div class="topbar">
-      <h1 id="topTitle">Dashboard</h1>
+      <h1 id="topTitle">View Groups</h1>
       <div class="role-box">
-        <div class="role-pill" id="rolePill"><span class="dot"></span><span id="roleLabel">Viewing — Dr. LG / Facilitator / Staff</span></div>
+        <div class="role-pill" id="rolePill"><span class="dot"></span><span id="roleLabel">Viewing</span></div>
         <button class="btn btn-outline btn-sm" id="switchRoleBtn">Switch role</button>
       </div>
     </div>
@@ -200,12 +200,18 @@
     <div class="content">
 
     <!-- GROUPS -->
-      <div class="view" id="view-groups">
+      <div class="view active" id="view-groups">
         <div id="groupsEmpty" class="empty">
           <div class="big">◫</div>
           <p>No groups generated yet. Go to <b>Generate Groups</b> once the roster is ready.</p>
         </div>
         <div id="groupsWrap" style="display:none;">
+          <div class="stat-row">
+            <div class="stat"><div class="num" id="statTotal">0</div><div class="lab">Students</div></div>
+            <div class="stat"><div class="num" id="statBoys">0</div><div class="lab">Boys</div></div>
+            <div class="stat yellow"><div class="num" id="statGirls">0</div><div class="lab">Girls</div></div>
+            <div class="stat"><div class="num" id="statGroups">0</div><div class="lab">Groups</div></div>
+          </div>
           <div class="card">
             <h3>Group health check</h3>
             <p class="small-muted">Any remaining conflicts after auto-balancing are listed here so a coordinator can resolve them manually below.</p>
@@ -243,6 +249,7 @@
             <div>
               <label>Address *</label>
               <input type="text" id="f_community" placeholder="Barangay name">
+
               <label>Notes</label>
               <textarea id="f_notes" rows="2" placeholder="Optional — anything else the coordinators should know"></textarea>
             </div>
@@ -335,23 +342,46 @@ let groups = null;   // array of {id,name,memberIds[],community,communityConflic
 let editingId = null;
 
 /* ============ STORAGE ============ */
-async function loadData(){
+function loadData(){
   try{
-    const s = await window.storage.get('students', true);
-    students = s ? JSON.parse(s.value) : [];
-  }catch(e){ students = []; }
+    const rawStudents = localStorage.getItem('cohort_students');
+    students = rawStudents ? JSON.parse(rawStudents) : [];
+    if(!Array.isArray(students)) students = [];
+  }catch(e){
+    console.error('Could not load students:', e);
+    students = [];
+  }
+
   try{
-    const g = await window.storage.get('groups', true);
-    groups = g ? JSON.parse(g.value) : null;
-  }catch(e){ groups = null; }
+    const rawGroups = localStorage.getItem('cohort_groups');
+    groups = rawGroups ? JSON.parse(rawGroups) : null;
+    if(groups !== null && !Array.isArray(groups)) groups = null;
+  }catch(e){
+    console.error('Could not load groups:', e);
+    groups = null;
+  }
 }
-async function saveStudents(){
-  try{ await window.storage.set('students', JSON.stringify(students), true); }
-  catch(e){ showToast("Couldn't save — check connection."); }
+
+function saveStudents(){
+  try{
+    localStorage.setItem('cohort_students', JSON.stringify(students));
+    return true;
+  }catch(e){
+    console.error('Could not save students:', e);
+    showToast("Couldn't save student data in this browser.");
+    return false;
+  }
 }
-async function saveGroups(){
-  try{ await window.storage.set('groups', JSON.stringify(groups), true); }
-  catch(e){ showToast("Couldn't save — check connection."); }
+
+function saveGroups(){
+  try{
+    localStorage.setItem('cohort_groups', JSON.stringify(groups));
+    return true;
+  }catch(e){
+    console.error('Could not save groups:', e);
+    showToast("Couldn't save group data in this browser.");
+    return false;
+  }
 }
 
 /* ============ HELPERS ============ */
@@ -366,7 +396,7 @@ function studentById(id){ return students.find(s=>s.id===id); }
 function isEditor(){ return role === 'editor'; }
 
 /* ============ NAV ============ */
-const titles = {dashboard:"Dashboard", add:"Add Student", roster:"Student Roster", generate:"Generate Groups", groups:"View Groups", communities:"Community Duty"};
+const titles = {    add:"Add Student", roster:"Student Roster", generate:"Generate Groups", groups:"View Groups", communities:"Community Duty"};
 document.querySelectorAll('.nav-btn').forEach(btn=>{
   btn.addEventListener('click', ()=>{
     document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
@@ -492,13 +522,54 @@ $('saveStudentBtn').addEventListener('click', async ()=>{
 
   if(editingId){
     const s = studentById(editingId);
-    Object.assign(s, {name, gender: genderEl.value, rank, income, community, partnerId, familyIds, notes});
+    if(!s) return;
+
+    // Remove this student from old partner/family links first.
+    students.forEach(other => {
+      if(other.id === s.id) return;
+      if(other.partnerId === s.id) other.partnerId = null;
+      other.familyIds = (other.familyIds || []).filter(id => id !== s.id);
+    });
+
+    Object.assign(s, {
+      name, gender: genderEl.value, rank, income, community,
+      partnerId, familyIds, notes
+    });
+
+    // Keep partner/family relationships reciprocal.
+    if(partnerId) {
+      const partner = studentById(partnerId);
+      if(partner) partner.partnerId = s.id;
+    }
+    familyIds.forEach(fid => {
+      const family = studentById(fid);
+      if(family && !(family.familyIds || []).includes(s.id)) {
+        family.familyIds = [...(family.familyIds || []), s.id];
+      }
+    });
+
     showToast('Student updated.');
   } else {
-    students.push({id: uid(), name, gender: genderEl.value, rank, income, community, partnerId, familyIds, notes});
+    const newStudent = {
+      id: uid(), name, gender: genderEl.value, rank, income,
+      community, partnerId, familyIds, notes
+    };
+    students.push(newStudent);
+
+    if(partnerId) {
+      const partner = studentById(partnerId);
+      if(partner) partner.partnerId = newStudent.id;
+    }
+    familyIds.forEach(fid => {
+      const family = studentById(fid);
+      if(family && !(family.familyIds || []).includes(newStudent.id)) {
+        family.familyIds = [...(family.familyIds || []), newStudent.id];
+      }
+    });
+
     showToast('Student added.');
   }
-  await saveStudents();
+  saveStudents();
   resetForm();
   populateFamilyOptions();
   populatePartnerOptions();
@@ -542,8 +613,8 @@ async function deleteStudent(id){
     if(s.partnerId===id) s.partnerId=null;
     s.familyIds = (s.familyIds||[]).filter(f=>f!==id);
   });
-  if(groups){ groups.forEach(g=> g.memberIds = g.memberIds.filter(m=>m!==id)); await saveGroups(); }
-  await saveStudents();
+  if(groups){ groups.forEach(g=> g.memberIds = g.memberIds.filter(m=>m!==id)); saveGroups(); }
+  saveStudents();
   renderRoster(); updateDashboard(); renderGroupsView();
   showToast('Student removed.');
 }
@@ -581,10 +652,15 @@ $('searchRoster')?.addEventListener('input', renderRoster);
 
 /* ============ DASHBOARD ============ */
 function updateDashboard(){
-  $('statTotal').textContent = students.length;
-  $('statBoys').textContent = students.filter(s=>s.gender==='M').length;
-  $('statGirls').textContent = students.filter(s=>s.gender==='F').length;
-  $('statGroups').textContent = groups ? groups.length : 0;
+  const total = $('statTotal');
+  const boys = $('statBoys');
+  const girls = $('statGirls');
+  const groupCount = $('statGroups');
+
+  if(total) total.textContent = students.length;
+  if(boys) boys.textContent = students.filter(s=>s.gender==='M').length;
+  if(girls) girls.textContent = students.filter(s=>s.gender==='F').length;
+  if(groupCount) groupCount.textContent = groups ? groups.length : 0;
 }
 
 /* ============ GENERATE VIEW ============ */
@@ -597,7 +673,7 @@ $('generateBtn').addEventListener('click', async ()=>{
   if(!isEditor()) return;
   if(students.length===0){ showToast('Add students to the roster first.'); return; }
   groups = buildGroups(students);
-  await saveGroups();
+  saveGroups();
   const conflicts = findConflicts(groups);
   $('genResultCard').style.display='block';
   $('genSummary').innerHTML = `
@@ -783,7 +859,7 @@ async function moveStudent(studentId, targetGroupId){
   groups.forEach(g=> g.memberIds = g.memberIds.filter(id=>id!==studentId));
   const target = groups.find(g=>g.id==targetGroupId);
   target.memberIds.push(studentId);
-  await saveGroups();
+  saveGroups();
   renderGroupsView();
   showToast('Student moved.');
 }
@@ -821,19 +897,20 @@ async function setCommunity(groupId){
   const input = document.querySelector(`.commInput[data-gid="${groupId}"]`);
   const g = groups.find(x=>x.id===groupId);
   g.community = input.value.trim();
-  await saveGroups();
+  saveGroups();
   renderCommunityView();
   showToast('Community duty saved.');
 }
 
 /* ============ INIT ============ */
-(async function init(){
-  await loadData();
+(function init(){
+  loadData();
   updateRoleUI();
   updateDashboard();
   renderRoster();
   populateFamilyOptions();
   populatePartnerOptions();
+  renderGroupsView();
 })();
 </script>
 </body>
